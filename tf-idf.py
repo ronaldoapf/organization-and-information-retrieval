@@ -1,5 +1,7 @@
 import os
 import sys
+import numpy
+import math
 
 def getPunctuations():
   punctuation = list()
@@ -38,12 +40,6 @@ def removeStopwords(terms, stopwords):
 
   return terms
 
-def inverseDocumentFrequency():
-  print("inverseDocumentFrequency")
-
-def termFrequency(element):
-  print("termFrequency")
-
 def main():
   docID = 0
   dictionary = dict()
@@ -74,18 +70,33 @@ def main():
           newChildDict[docID] = 1 
           dictionary[word].update(newChildDict)
   
-  lines = []
-  columns = []
+  matrix = numpy.zeros( (len(dictionary)+1, len(document)+1), dtype=numpy.object_)
+
+  countRows = 1
+  countColumns = 0
 
   for word in dictionary:
-    lines.append(word)
+    while countColumns < len(document)+1:
+      if countColumns == 0:
+        matrix[0][countColumns] = "Documents"
+        countColumns = countColumns + 1
+      matrix[0][countColumns] = "Doc " + str(countColumns)
+      countColumns = countColumns + 1
 
-  for index, docs in enumerate(sorted(document), start=1):
-    print(docs) 
-    columns.append(index)
+    matrix[countRows][0] = word
+    countRows = countRows + 1
 
-  print(lines)
-  print(columns)
+  numberOfDocs = len(document)
 
+  for word in dictionary:
+    position = numpy.where(matrix == word)
+    if position[0][0]:
+      keys = dictionary[word].keys()
+      for idxDocuments in keys:
+        tf = 1 + math.log10(dictionary[word][idxDocuments])
+        idf = math.log10(numberOfDocs/len(dictionary[word]))
+        matrix[position[0][0]][idxDocuments] = numpy.round(tf * idf, 2)
+
+  print(matrix)
 if __name__ == "__main__":
   main()
