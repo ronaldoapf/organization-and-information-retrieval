@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+from tqdm import tqdm
 import math
 import numpy
 
@@ -47,17 +48,10 @@ def main():
   punctuation = getPunctuation()
   document = os.listdir(directory)
 
-  for filename in sorted(document):
+  startTimeDocument = time.time()
+  for filename in tqdm(sorted(document)):
     docID = docID + 1
-    print("Starting doc", docID)
-    startTimeDocument = time.time()
     contentFile = getTerms(directory+'/'+filename)
-    if "(Texto informado pelo autor)" in contentFile:
-      contentFile = contentFile.split("(Texto informado pelo autor)")[0]
-
-    if "(Texto gerado automaticamente pela aplicaï¿½ï¿½o CVLattes)" in contentFile:
-      contentFile = contentFile.split("(Texto gerado automaticamente pela aplicaï¿½ï¿½o CVLattes)")[0]
-
     contentFile = removePunctuation(contentFile, punctuation)
     contentFile = tokenize(contentFile.lower())
     contentFile = removeStopwords(contentFile, stopwords)
@@ -106,17 +100,16 @@ def main():
     #       tf = 1 + math.log10(dictionary[word][idxDocuments])
     #       idf = math.log10(numberOfDocs/len(dictionary[word]))
     #       matrix[position[0][0]][idxDocuments] = numpy.round(tf * idf, 2)
-    print("Time to process doc", round(time.time() - startTimeDocument, 2))
-  
+
+  print("Time to process doc", round(time.time() - startTimeDocument, 2))
+
   file = open('dictionary.txt', 'w')
   file.write(str(dictionary))
   file.close()
 
-  jsonDump = json.dump(dictionary)
-  jsonFile = open('file.json', 'w')
-  jsonFile.write(jsonDump)
-  jsonFile.close()
-  
+  jsonFile = json.dumps(dictionary)
+  with open("dictionary.json", "w") as outfile:
+    outfile.write(jsonFile)
 
 if __name__ == "__main__":
   startTime = time.time()
