@@ -1,10 +1,14 @@
 import os
-import sys
-import time
-import json
+import utils
 from tqdm import tqdm
-import math
-import numpy
+
+def tokenize(content):
+	return content.split()
+
+def getStopwords():
+  with open('stopwords.txt', 'r', encoding="utf-8") as outfile:
+    stopwords = outfile.read()
+    return stopwords.split()
 
 def getPunctuation():
   with open('punctuation.txt', 'r', encoding="utf-8") as outfile:
@@ -14,18 +18,6 @@ def getPunctuation():
     for punct in splitFile:
       punctuation.append(punct)
   return punctuation
-
-def tokenize(content):
-	return content.split()
-
-def getStopwords():
-  with open('stopwords.txt', 'r', encoding="utf-8") as outfile:
-    stopwords = outfile.read()
-    return tokenize(stopwords)
-
-def getTerms(file):
-  with open(file, 'r') as outfile:
-    return outfile.read()
 
 def removePunctuation(terms, punctuation):
   for punct in punctuation:
@@ -40,79 +32,59 @@ def removeStopwords(terms, stopwords):
         terms.remove(words)
   return terms
 
+def menu():
+  print('### Trabalho ORI ###')
+  print('[1] Organizar documentos a partir do corpus.txt')
+  print('[2] Gerar índice invertido')
+  print('[3] Realizar consulta')
+  print('[4] Gerar matrix TF-IDF')
+
+
 def main():
   docID = 0
   dictionary = dict()
-  directory = sys.argv[1]
   stopwords = getStopwords()
   punctuation = getPunctuation()
-  document = os.listdir(directory)
 
-  startTimeDocument = time.time()
-  for filename in tqdm(sorted(document)):
-    docID = docID + 1
-    contentFile = getTerms(directory+'/'+filename)
-    contentFile = removePunctuation(contentFile, punctuation)
-    contentFile = tokenize(contentFile.lower())
-    contentFile = removeStopwords(contentFile, stopwords)
+  while True:
+    menu()
+    option = int(input("Digite sua opção: "))
 
-    for word in contentFile:
-      if word not in dictionary:
-        dictChild = dict()
-        dictChild[docID] = 1
-        dictionary[word] = dictChild
+    if option == 0:
+      return False
 
-      elif word in dictionary:
-        if docID in dictionary[word]:
-          dictionary[word][docID] = dictionary[word][docID] + 1
-        
-        if docID not in dictionary[word]:
-          newChildDict = dict()
-          newChildDict[docID] = 1 
-          dictionary[word].update(newChildDict)
-      
-      
+    if option == 1:
+      utils.documents()
 
-    # matrix = numpy.zeros((len(dictionary) + 1, len(document) + 1), dtype=numpy.object_)
+    if option == 2:
+      if 'documents' not in os.listdir():
+        print('É necessário organizar o documento para gerar o índice invertido')
 
-    # countRows = 1
-    # countColumns = 0
+      else:
+        for filename in tqdm(sorted(os.listdir('documents'))):
+          docID = docID + 1
+          with open('documents/'+filename, 'r') as outfile:
+            contentFile = outfile.read()
 
-    # for word in dictionary:
-    #   # Cabeçalho da tabela mostrando o número dos documentos
-    #   while countColumns < len(document) + 1:
-    #     if countColumns == 0:
-    #       matrix[0][countColumns] = "Documents"
-    #       countColumns = countColumns + 1
-    #     matrix[0][countColumns] = "Doc " + str(countColumns)
-    #     countColumns = countColumns + 1
+          contentFile = removePunctuation(contentFile, punctuation)
+          contentFile = contentFile.lower().split()
+          contentFile = removeStopwords(contentFile, stopwords)
 
-    #   matrix[countRows][0] = word
-    #   countRows = countRows + 1
+          utils.invertedIndex(dictionary, contentFile, docID)
+    
+    if option == 3:
+      query = str(input("Digite a consulta: "))
+      if len(query.split()) > 1:
+        query = removePunctuation(query, punctuation)
+        query = query.lower().split()
+        query = removeStopwords(query, stopwords)
+      else:
+        query = query.split()
 
-    # numberOfDocs = len(document)
+      utils.booleanModel(dictionary, query)
 
-    # for word in dictionary:
-    #   position = numpy.where(matrix == word)
-    #   if position[0][0]:
-    #     keys = dictionary[word].keys()
-    #     for idxDocuments in keys:
-    #       tf = 1 + math.log10(dictionary[word][idxDocuments])
-    #       idf = math.log10(numberOfDocs/len(dictionary[word]))
-    #       matrix[position[0][0]][idxDocuments] = numpy.round(tf * idf, 2)
-
-  print("Time to process doc", round(time.time() - startTimeDocument, 2))
-
-  file = open('dictionary.txt', 'w')
-  file.write(str(dictionary))
-  file.close()
-
-  jsonFile = json.dumps(dictionary)
-  with open("dictionary.json", "w") as outfile:
-    outfile.write(jsonFile)
+    if option == 4:
+      utils.generateTfIdf(dictionary, os.listdir('documents'))
 
 if __name__ == "__main__":
-  startTime = time.time()
   main()
-  times = round(time.time() - startTime, 2)
-  print("Tempo de execução:", times)

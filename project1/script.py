@@ -3,10 +3,12 @@ import time
 
 startTime = time.time()
 
-if not os.path.exists('documents'):
-  os.mkdir('documents')
+path = 'documents'
 
-with open('corpus.txt', 'r', encoding='latin1') as outfile:
+if not os.path.exists(path):
+  os.mkdir(path)
+
+with open('corpusReduced.txt', 'r', encoding='latin1') as outfile:
   file = outfile.read().splitlines()
   name = ''
 
@@ -14,8 +16,7 @@ with open('corpus.txt', 'r', encoding='latin1') as outfile:
     if 'NOME  -' in line:
       name = line.split("NOME  - ")[1]
       if len(name) != 0:
-        
-        file = open('documents/'+name+'.txt', 'w+')
+        file = open(path+"/"+name+'.txt', 'w+')
         file.close()
 
     if 'RESU  -' in line:
@@ -27,7 +28,7 @@ with open('corpus.txt', 'r', encoding='latin1') as outfile:
         if "(Texto gerado automaticamente pela aplicaï¿½ï¿½o CVLattes)" in content:
           content = content.split("(Texto gerado automaticamente pela aplicaï¿½ï¿½o CVLattes)")[0]
           
-        file = open('documents/'+name+'.txt', 'a')
+        file = open(path+"/"+name+'.txt', 'a')
         file.write(content)
         file.close()
 
